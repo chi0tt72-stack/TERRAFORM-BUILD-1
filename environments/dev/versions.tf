@@ -1,3 +1,4 @@
+# environments/dev/versions.tf
 terraform {
   required_version = ">= 1.0"
 
@@ -12,10 +13,17 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket = "multivar-databricks-chiottcbucket"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-    use_lockfile = true
+  # GitLab Managed Terraform State
+  # Backend configuration provided via -backend-config in CI/CD
+  backend "http" {
   }
 }
+
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = var.tags
+  }
+}
+
