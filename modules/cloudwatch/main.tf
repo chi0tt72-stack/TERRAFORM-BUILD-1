@@ -4,8 +4,9 @@ resource "aws_sns_topic" "cloudwatch_alarms" {
 }
 
 # CloudWatch Alarms for EC2 CPU
+# Use map with static index keys to support unknown instance IDs during replacement
 resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
-  for_each = toset(var.instance_ids)
+  for_each = { for i, id in var.instance_ids : tostring(i) => id }
 
   alarm_name          = "${var.environment}-ec2-cpu-high-${each.value}"
   comparison_operator = "GreaterThanThreshold"
@@ -24,8 +25,9 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
 }
 
 # CloudWatch Alarms for EC2 Status Check
+# Use map with static index keys to support unknown instance IDs during replacement
 resource "aws_cloudwatch_metric_alarm" "ec2_status_check" {
-  for_each = toset(var.instance_ids)
+  for_each = { for i, id in var.instance_ids : tostring(i) => id }
 
   alarm_name          = "${var.environment}-ec2-status-check-${each.value}"
   comparison_operator = "GreaterThanThreshold"
