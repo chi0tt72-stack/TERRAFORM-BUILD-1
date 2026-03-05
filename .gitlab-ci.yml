@@ -33,6 +33,7 @@ before_script:
   - terraform --version
   # Initialize Terraform with GitLab HTTP backend
   - terraform init
+    -terraform init -reconfigure
     -backend-config="address=${TF_ADDRESS}"
     -backend-config="lock_address=${TF_ADDRESS}/lock"
     -backend-config="unlock_address=${TF_ADDRESS}/lock"
