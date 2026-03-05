@@ -31,16 +31,16 @@ stages:
 before_script:
   - cd ${TF_ROOT}
   - terraform --version
-  # Initialize Terraform with GitLab HTTP backend
-  - terraform init -reconfigure
-    -backend-config="address=${TF_ADDRESS}"
-    -backend-config="lock_address=${TF_ADDRESS}/lock"
-    -backend-config="unlock_address=${TF_ADDRESS}/lock"
-    -backend-config="username=gitlab-ci-token"
-    -backend-config="password=${CI_JOB_TOKEN}"
-    -backend-config="lock_method=POST"
-    -backend-config="unlock_method=DELETE"
-    -backend-config="retry_wait_min=5"
+  - |
+    terraform init -reconfigure \
+      -backend-config="address=${TF_ADDRESS}" \
+      -backend-config="lock_address=${TF_ADDRESS}/lock" \
+      -backend-config="unlock_address=${TF_ADDRESS}/lock" \
+      -backend-config="username=gitlab-ci-token" \
+      -backend-config="password=${CI_JOB_TOKEN}" \
+      -backend-config="lock_method=POST" \
+      -backend-config="unlock_method=DELETE" \
+      -backend-config="retry_wait_min=5"
 
 # Job 1: Validate Terraform syntax and formatting
 validate:
@@ -79,6 +79,9 @@ apply:
     - terraform apply -auto-approve plan.tfplan
   dependencies:
     - plan
+  needs:
+    - job: plan
+      artifacts: true
   when: manual
   only:
     - main
