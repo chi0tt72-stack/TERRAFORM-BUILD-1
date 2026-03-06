@@ -199,3 +199,79 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+## Daily Usage
+
+### Making Infrastructure Changes
+
+**Local workflow:**
+
+```bash
+cd ~/TERRAFORM-COURSE-MYSTUDY/environments/dev
+
+# Make changes to .tf files
+
+# Format code
+terraform fmt
+
+# Validate syntax
+terraform validate
+
+# Preview changes
+terraform plan
+
+# Apply locally (for testing)
+terraform apply
+```
+
+### GitLab CI/CD workflow (recommended)
+
+```bash
+# Make changes to .tf files
+git add .
+git commit -m "feat: description of changes"
+git push origin main
+
+# Go to GitLab pipeline
+# Review plan output
+# Manually trigger apply stage
+```
+
+### Accessing EC2 Instance
+
+```bash
+# SSH to current instance
+ssh -i ~/.ssh/terraform-course-key ec2-user@98.81.148.21
+
+# Get current instance IP from Terraform
+cd ~/TERRAFORM-COURSE-MYSTUDY/environments/dev
+terraform output instance_public_ip
+```
+
+### Updating SSH Keys
+
+```bash
+# Generate new key pair
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/terraform-course-key -N ""
+
+# Update AWS Secrets Manager
+aws secretsmanager update-secret \
+  --secret-id terraform/ssh-public-key \
+  --secret-string "$(cat ~/.ssh/terraform-course-key.pub)" \
+  --region us-east-1
+
+# Delete old AWS key pair
+aws ec2 delete-key-pair --key-name terraformtest-key --region us-east-1
+
+# Trigger pipeline to recreate
+git commit --allow-empty -m "chore: recreate key pair with new SSH key"
+git push origin main
+```
+
+### Destroying Infrastructure
+
+```bash
+cd ~/TERRAFORM-COURSE-MYSTUDY/environments/dev
+terraform destroy
+```
+
