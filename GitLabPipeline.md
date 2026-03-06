@@ -18,7 +18,7 @@ apply - Runs terraform apply plan.tfplan (manual trigger required)
 
 ### Pipeline Stage Details
 
-
+```mermaid
 stateDiagram-v2
     [*] --> Validate
     Validate --> FormatCheck
@@ -42,7 +42,7 @@ stateDiagram-v2
     Success --> [*]
     Failed --> [*]
     Cancelled --> [*]
-Insert at cursor
+```
 
 ### Backend Configuration
 
@@ -79,7 +79,7 @@ Manual triggers:
 
 Secrets Management Strategy
 
-
+```mermaid
 graph LR
     subgraph "Never in Git"
         PK[Private SSH Key<br/>~/.ssh/terraform-course-key]
@@ -109,6 +109,7 @@ graph LR
     style AWS fill:#EA4335
     style PUBKEY fill:#34A853
     style CODE fill:#4285F4
+```
 
 ### What's in AWS Secrets Manager
 
