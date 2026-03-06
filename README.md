@@ -275,9 +275,9 @@ cd ~/TERRAFORM-COURSE-MYSTUDY/environments/dev
 terraform destroy
 ```
 
-# GitLab CI/CD Pipeline
+## GitLab CI/CD Pipeline
 
-## Pipeline Configuration
+### Pipeline Configuration
 
 ```bash 
 File: .gitlab-ci.yml
