@@ -41,26 +41,38 @@ before_script:
       echo "Please enable ID tokens in GitLab settings"
       exit 1
     fi
-  # Authenticate using OIDC
+  # Debug: Show token info (first/last 20 chars only for security)
+  - |
+    echo "JWT Token length: ${#JWT_TOKEN} characters"
+    echo "JWT Token preview: ${JWT_TOKEN:0:20}...${JWT_TOKEN: -20}"
+  # Debug: Show AWS role ARN
+  - echo "AWS Role ARN: ${AWS_ROLE_ARN}"
+  # Authenticate using OIDC with detailed error output
   - |
     echo "Attempting OIDC authentication..."
+    set -x  # Enable command echoing for debugging
     CREDENTIALS=$(aws sts assume-role-with-web-identity \
       --role-arn ${AWS_ROLE_ARN} \
       --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" \
       --web-identity-token ${JWT_TOKEN} \
       --duration-seconds 3600 \
       --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-      --output text 2>&1)
+      --output text 2>&1) || {
+        echo "✗ OIDC authentication FAILED!"
+        echo "Full error output:"
+        echo "$CREDENTIALS"
+        echo ""
+        echo "Debugging information:"
+        echo "- Role ARN: ${AWS_ROLE_ARN}"
+        echo "- Session name: GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}"
+        echo "- Token length: ${#JWT_TOKEN}"
+        exit 1
+      }
+    set +x  # Disable command echoing
     
-    if [ $? -eq 0 ]; then
-      echo "✓ OIDC authentication successful!"
-      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $CREDENTIALS)
-      echo "✓ AWS credentials exported"
-    else
-      echo "✗ OIDC authentication FAILED!"
-      echo "Error: $CREDENTIALS"
-      exit 1
-    fi
+    echo "✓ OIDC authentication successful!"
+    export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $CREDENTIALS)
+    echo "✓ AWS credentials exported"
   - |
     terraform init -reconfigure \
       -backend-config="address=${TF_ADDRESS}" \
