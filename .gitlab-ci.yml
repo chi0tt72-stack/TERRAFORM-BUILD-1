@@ -67,7 +67,7 @@ before_script:
   - export TF_HTTP_RETRY_WAIT_MIN=5
   - echo "Running terraform init..."
   - |
-    terraform init \
+    terraform init -reconfigure \
       -backend-config="address=${TF_HTTP_ADDRESS}" \
       -backend-config="lock_address=${TF_HTTP_LOCK_ADDRESS}" \
       -backend-config="unlock_address=${TF_HTTP_UNLOCK_ADDRESS}" \
