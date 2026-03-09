@@ -29,22 +29,23 @@ before_script:
   - pip3 install --break-system-packages --upgrade awscli
   - |
     if [ -n "$GITLAB_OIDC_TOKEN" ]; then
+      echo "✓ Using GITLAB_OIDC_TOKEN"
       JWT_TOKEN=$GITLAB_OIDC_TOKEN
     elif [ -n "$CI_JOB_JWT_V2" ]; then
+      echo "✓ Using CI_JOB_JWT_V2"
       JWT_TOKEN=$CI_JOB_JWT_V2
     else
-      echo "ERROR: No JWT token available"
+      echo "✗ ERROR: No JWT token available!"
       exit 1
     fi
-  - |
-    CREDENTIALS=$(aws sts assume-role-with-web-identity \
-      --role-arn ${AWS_ROLE_ARN} \
-      --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" \
-      --web-identity-token ${JWT_TOKEN} \
-      --duration-seconds 3600 \
-      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-      --output text)
-    export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $CREDENTIALS)
+  - echo "JWT Token length is ${#JWT_TOKEN} characters"
+  - echo "AWS Role ARN is ${AWS_ROLE_ARN}"
+  - echo "Attempting OIDC authentication..."
+  - echo "Running AWS STS command..."
+  - aws sts assume-role-with-web-identity --role-arn ${AWS_ROLE_ARN} --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" --web-identity-token ${JWT_TOKEN} --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text > /tmp/creds.txt 2>&1 && echo "SUCCESS" || echo "FAILED"
+  - echo "Command completed, checking results..."
+  - cat /tmp/creds.txt
+  - echo "End of AWS output"
   - export TF_HTTP_ADDRESS=${TF_ADDRESS}
   - export TF_HTTP_LOCK_ADDRESS=${TF_ADDRESS}/lock
   - export TF_HTTP_UNLOCK_ADDRESS=${TF_ADDRESS}/lock
@@ -53,6 +54,14 @@ before_script:
   - export TF_HTTP_LOCK_METHOD=POST
   - export TF_HTTP_UNLOCK_METHOD=DELETE
   - export TF_HTTP_RETRY_WAIT_MIN=5
+  - |
+    if grep -q "AKIA" /tmp/creds.txt; then
+      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(cat /tmp/creds.txt))
+      echo "✓ AWS credentials exported"
+    else
+      echo "✗ Failed to get AWS credentials"
+      exit 1
+    fi
   - terraform init
 
 validate:
@@ -121,4 +130,3 @@ destroy:
   environment:
     name: dev
     action: stop
-
