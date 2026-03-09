@@ -25,10 +25,8 @@ stages:
 before_script:
   - cd ${TF_ROOT}
   - terraform --version
-  # Install AWS CLI for OIDC authentication
   - apk add --no-cache python3 py3-pip
   - pip3 install --break-system-packages --upgrade awscli
-  # Use GITLAB_OIDC_TOKEN (preferred) or fall back to CI_JOB_JWT_V2
   - |
     if [ -n "$GITLAB_OIDC_TOKEN" ]; then
       echo "✓ Using GITLAB_OIDC_TOKEN"
@@ -38,41 +36,32 @@ before_script:
       JWT_TOKEN=$CI_JOB_JWT_V2
     else
       echo "✗ ERROR: No JWT token available!"
-      echo "Please enable ID tokens in GitLab settings"
       exit 1
     fi
-  # Debug: Show token info (first/last 20 chars only for security)
-  - |
-    echo "JWT Token length: ${#JWT_TOKEN} characters"
-    echo "JWT Token preview: ${JWT_TOKEN:0:20}...${JWT_TOKEN: -20}"
-  # Debug: Show AWS role ARN
-  - echo "AWS Role ARN: ${AWS_ROLE_ARN}"
-  # Authenticate using OIDC with detailed error output
+  - echo "JWT Token length is ${#JWT_TOKEN} characters"
+  - echo "AWS Role ARN is ${AWS_ROLE_ARN}"
   - |
     echo "Attempting OIDC authentication..."
-    set -x  # Enable command echoing for debugging
-    CREDENTIALS=$(aws sts assume-role-with-web-identity \
+    aws sts assume-role-with-web-identity \
       --role-arn ${AWS_ROLE_ARN} \
       --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}" \
       --web-identity-token ${JWT_TOKEN} \
       --duration-seconds 3600 \
       --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-      --output text 2>&1) || {
-        echo "✗ OIDC authentication FAILED!"
-        echo "Full error output:"
-        echo "$CREDENTIALS"
-        echo ""
-        echo "Debugging information:"
-        echo "- Role ARN: ${AWS_ROLE_ARN}"
-        echo "- Session name: GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}"
-        echo "- Token length: ${#JWT_TOKEN}"
-        exit 1
-      }
-    set +x  # Disable command echoing
+      --output text > /tmp/credentials.txt 2>&1
     
-    echo "✓ OIDC authentication successful!"
-    export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $CREDENTIALS)
-    echo "✓ AWS credentials exported"
+    if [ $? -eq 0 ]; then
+      echo "✓ OIDC authentication successful!"
+      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(cat /tmp/credentials.txt))
+      echo "✓ AWS credentials exported"
+      rm /tmp/credentials.txt
+    else
+      echo "✗ OIDC authentication FAILED!"
+      echo "Error details:"
+      cat /tmp/credentials.txt
+      rm /tmp/credentials.txt
+      exit 1
+    fi
   - |
     terraform init -reconfigure \
       -backend-config="address=${TF_ADDRESS}" \
@@ -150,4 +139,3 @@ destroy:
   environment:
     name: dev
     action: stop
-
