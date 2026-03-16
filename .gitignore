@@ -23,3 +23,6 @@ terraform.tfstate
 terraform.tfstate.backup
 .terraform/
 .terraform.lock.hcl
+
+# Ansible (generated inventory contains instance IPs)
+ansible/inventory/terraform_hosts.ini

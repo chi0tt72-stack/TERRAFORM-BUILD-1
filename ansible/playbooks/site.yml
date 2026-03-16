@@ -1,0 +1,36 @@
+---
+# Main playbook: base configuration for EC2 instances created by Terraform.
+# Run from repo root:  cd ansible && ansible-playbook playbooks/site.yml
+# Or pass SSH key:    ansible-playbook playbooks/site.yml -e ansible_ssh_private_key_file=~/.ssh/terraform-course-key
+- name: Configure dev EC2 instances
+  hosts: dev_instances
+  become: true
+  tasks:
+    - name: Wait for SSH to be ready
+      wait_for:
+        port: 22
+        host: "{{ ansible_host }}"
+        delay: 3
+        timeout: 60
+      delegate_to: localhost
+      run_once: true
+
+    - name: Ensure base packages are installed
+      ansible.builtin.package:
+        name:
+          - python3
+          - python3-pip
+          - vim-enhanced
+          - htop
+          - tmux
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Create motd with host info
+      ansible.builtin.copy:
+        content: |
+          Terraform + Ansible managed (dev).
+          Instance: {{ inventory_hostname }}
+        dest: /etc/motd
+        owner: root
+        mode: "0644"
