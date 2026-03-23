@@ -44,19 +44,19 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - Provide default values mirroring `environments/dev/terraform.tfvars`
     - _Requirements: 4.1_
 
-- [ ] 3. Create `modules/compute-asg/` Terraform module
-  - [ ] 3.1 Create `modules/compute-asg/variables.tf`
+- [x] 3. Create `modules/compute-asg/` Terraform module
+  - [x] 3.1 Create `modules/compute-asg/variables.tf`
     - Define inputs: `environment`, `vpc_id`, `subnet_ids`, `instance_type`, `min_size` (default 2), `desired_capacity` (default 2), `max_size` (default 4), `ssh_public_key`, `allowed_ssh_cidrs`, `alb_security_group_id`, `target_group_arns` (default []), `tags`
     - `alb_security_group_id` is used to restrict port 80 ingress to ALB only
     - `target_group_arns` is used to register ASG instances with the ALB target group
     - _Requirements: 8.1, 8.3, 18.1, 19.1_
-  - [ ] 3.2 Create `modules/compute-asg/main.tf`
+  - [x] 3.2 Create `modules/compute-asg/main.tf`
     - Create `aws_key_pair` from `ssh_public_key` variable
     - Create `aws_security_group` with SSH ingress from `allowed_ssh_cidrs`, HTTP (port 80) ingress from `var.alb_security_group_id` only (not 0.0.0.0/0), and all egress
     - Create `aws_launch_template` referencing AMI (via data source or variable), instance type, key pair, and security group
     - Create `aws_autoscaling_group` with `min_size = var.min_size`, `desired_capacity = var.desired_capacity`, `max_size = var.max_size`, `vpc_zone_identifier = var.subnet_ids` for AZ distribution, and `target_group_arns = var.target_group_arns`
     - _Requirements: 8.1, 8.2, 8.3, 8.5, 8.7, 18.1, 19.1, 19.2_
-  - [ ] 3.3 Create `modules/compute-asg/outputs.tf`
+  - [x] 3.3 Create `modules/compute-asg/outputs.tf`
     - Output `asg_name`, `launch_template_id`, `instance_ips`, `security_group_id`
     - _Requirements: 8.2, 8.4_
   - [ ]* 3.4 Write property test for ASG capacity constraints

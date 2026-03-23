@@ -182,7 +182,7 @@ paths:
 A new backend config file `environments/dev/github.s3.tfbackend`:
 
 ```hcl
-bucket       = "multivar-databricks-chiottcbucket"
+bucket       = "github-terraform-state-chiottc"
 key          = "github/terraform.tfstate"
 region       = "us-east-1"
 use_lockfile = true
@@ -453,7 +453,7 @@ The `environments/dev-github/terraform.tfvars` mirrors the existing `environment
 |---------------|---------------|-------------|
 | `AWS_ROLE_ARN` | `arn:aws:iam::ACCOUNT_ID:role/GitHubActionsTerraformRole` | IAM role ARN for OIDC |
 | `AWS_REGION` | `us-east-1` | AWS region |
-| `TF_BACKEND_BUCKET` | `multivar-databricks-chiottcbucket` | S3 bucket for state |
+| `TF_BACKEND_BUCKET` | `github-terraform-state-chiottc` | S3 bucket for state |
 | `TF_BACKEND_KEY` | `github/terraform.tfstate` | State file key |
 | `SSH_PRIVATE_KEY_SECRET` | `terraform/ssh-private-key` | Secrets Manager secret name |
 | `SSH_PUBLIC_KEY_SECRET` | `terraform/ssh-public-key` | Secrets Manager secret name |

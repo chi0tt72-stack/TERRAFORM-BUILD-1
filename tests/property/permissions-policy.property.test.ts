@@ -9,6 +9,7 @@ import { resolve } from 'path';
 const REQUIRED_SERVICE_PREFIXES = [
   'ec2',
   'autoscaling',
+  'elasticloadbalancing',
   's3',
   'cloudwatch',
   'sns',
