@@ -1,0 +1,164 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+      - 'ansible/**'
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: environments/dev-github
+
+    outputs:
+      plan-exit-code: ${{ steps.plan.outputs.exitcode }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Retrieve SSH keys from Secrets Manager
+        run: |
+          SSH_PRIVATE_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ${{ vars.SSH_PRIVATE_KEY_SECRET || 'terraform/ssh-private-key' }} \
+            --query SecretString --output text)
+          echo "$SSH_PRIVATE_KEY" > /tmp/ssh_key
+          chmod 0600 /tmp/ssh_key
+
+          SSH_PUBLIC_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ${{ vars.SSH_PUBLIC_KEY_SECRET || 'terraform/ssh-public-key' }} \
+            --query SecretString --output text)
+          echo "SSH_PUBLIC_KEY=$SSH_PUBLIC_KEY" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend-config=github.s3.tfbackend
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var="ssh_public_key=$SSH_PUBLIC_KEY" \
+            -out=plan.tfplan \
+            -no-color | tee plan.txt
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan
+          path: |
+            environments/dev-github/plan.tfplan
+            environments/dev-github/plan.txt
+          retention-days: 7
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f /tmp/ssh_key
+
+  apply:
+    name: Terraform Apply
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: environments/dev-github
+
+    outputs:
+      asg_name: ${{ steps.outputs.outputs.asg_name }}
+      instance_ips: ${{ steps.outputs.outputs.instance_ips }}
+      vpc_id: ${{ steps.outputs.outputs.vpc_id }}
+      s3_bucket_name: ${{ steps.outputs.outputs.s3_bucket_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Retrieve SSH keys from Secrets Manager
+        run: |
+          SSH_PRIVATE_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ${{ vars.SSH_PRIVATE_KEY_SECRET || 'terraform/ssh-private-key' }} \
+            --query SecretString --output text)
+          echo "$SSH_PRIVATE_KEY" > /tmp/ssh_key
+          chmod 0600 /tmp/ssh_key
+
+          SSH_PUBLIC_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ${{ vars.SSH_PUBLIC_KEY_SECRET || 'terraform/ssh-public-key' }} \
+            --query SecretString --output text)
+          echo "SSH_PUBLIC_KEY=$SSH_PUBLIC_KEY" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init -backend-config=github.s3.tfbackend
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="ssh_public_key=$SSH_PUBLIC_KEY" \
+            -out=plan.tfplan \
+            -no-color
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve plan.tfplan
+
+      - name: Export Terraform Outputs
+        id: outputs
+        run: |
+          echo "asg_name=$(terraform output -raw asg_name)" >> $GITHUB_OUTPUT
+          echo "instance_ips=$(terraform output -json instance_ips)" >> $GITHUB_OUTPUT
+          echo "vpc_id=$(terraform output -raw vpc_id)" >> $GITHUB_OUTPUT
+          echo "s3_bucket_name=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
+
+      - name: Upload Plan Artifact on Failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: terraform-plan-debug
+          path: |
+            environments/dev-github/plan.tfplan
+          retention-days: 7
+
+      - name: Run Ansible Playbook
+        run: |
+          sudo apt-get update && sudo apt-get install -y ansible
+          cd ${{ github.workspace }}
+          ansible-playbook ansible/playbooks/site.yml \
+            -i ansible/inventory/terraform_hosts.ini \
+            -e ansible_ssh_private_key_file=/tmp/ssh_key
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f /tmp/ssh_key

@@ -59,73 +59,73 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
   - [x] 3.3 Create `modules/compute-asg/outputs.tf`
     - Output `asg_name`, `launch_template_id`, `instance_ips`, `security_group_id`
     - _Requirements: 8.2, 8.4_
-  - [ ]* 3.4 Write property test for ASG capacity constraints
+  - [x] 3.4 Write property test for ASG capacity constraints
     - **Property 4: ASG capacity constraints**
     - **Validates: Requirements 8.3**
-  - [ ]* 3.5 Write property test for launch template required attributes
+  - [x] 3.5 Write property test for launch template required attributes
     - **Property 9: Launch template required attributes**
     - **Validates: Requirements 8.1, 8.7**
-  - [ ]* 3.6 Write property test for ASG references target group ARNs
+  - [x] 3.6 Write property test for ASG references target group ARNs
     - **Property 15: ASG references target group ARNs**
     - **Validates: Requirements 18.1**
-  - [ ]* 3.7 Write property test for instance security group restricts port 80 to ALB only
+  - [x] 3.7 Write property test for instance security group restricts port 80 to ALB only
     - **Property 16: Instance security group restricts port 80 to ALB only**
     - **Validates: Requirements 19.1, 19.2**
 
-- [ ] 4. Create `modules/alb/` Terraform module
-  - [ ] 4.1 Create `modules/alb/variables.tf`
+- [x] 4. Create `modules/alb/` Terraform module
+  - [x] 4.1 Create `modules/alb/variables.tf`
     - Define inputs: `environment`, `vpc_id`, `subnet_ids` (public subnets), `vpc_cidr`, `tags`
     - _Requirements: 14.1, 15.1_
-  - [ ] 4.2 Create `modules/alb/main.tf`
+  - [x] 4.2 Create `modules/alb/main.tf`
     - Create `aws_security_group.alb` with ingress TCP 80 from `0.0.0.0/0` and egress all to `var.vpc_cidr`
     - Create `aws_lb.main` as internet-facing ALB in public subnets, attached to `aws_security_group.alb`
     - Create `aws_lb_target_group.main` with protocol HTTP, port 80, health check on `/` (interval=30, timeout=5, healthy=2, unhealthy=3)
     - Create `aws_lb_listener.http` on port 80 with default action forwarding to `aws_lb_target_group.main`
     - _Requirements: 14.1, 14.2, 15.1, 15.2, 15.3, 15.4, 16.1, 16.2, 16.3, 17.1, 17.2_
-  - [ ] 4.3 Create `modules/alb/outputs.tf`
+  - [x] 4.3 Create `modules/alb/outputs.tf`
     - Output `alb_dns_name`, `alb_arn`, `alb_security_group_id`, `target_group_arn`
     - _Requirements: 14.5, 18.4, 19.3_
-  - [ ]* 4.4 Write property test for ALB is internet-facing with correct security group
+  - [x] 4.4 Write property test for ALB is internet-facing with correct security group
     - **Property 10: ALB is internet-facing with correct security group**
     - **Validates: Requirements 14.1, 14.2**
-  - [ ]* 4.5 Write property test for ALB module outputs completeness
+  - [x] 4.5 Write property test for ALB module outputs completeness
     - **Property 11: ALB module outputs completeness**
     - **Validates: Requirements 14.5, 18.4, 19.3**
-  - [ ]* 4.6 Write property test for ALB security group allows only port 80 inbound
+  - [x] 4.6 Write property test for ALB security group allows only port 80 inbound
     - **Property 12: ALB security group allows only port 80 inbound**
     - **Validates: Requirements 15.1, 15.2, 15.3, 15.4**
-  - [ ]* 4.7 Write property test for target group health check configuration
+  - [x] 4.7 Write property test for target group health check configuration
     - **Property 13: Target group health check configuration**
     - **Validates: Requirements 16.1, 16.2, 16.3**
-  - [ ]* 4.8 Write property test for HTTP listener forwards to target group
+  - [x] 4.8 Write property test for HTTP listener forwards to target group
     - **Property 14: HTTP listener forwards to target group**
     - **Validates: Requirements 17.1, 17.2**
 
-- [ ] 5. Wire `environments/dev-github/main.tf` and outputs
-  - [ ] 5.1 Create `environments/dev-github/main.tf`
+- [x] 5. Wire `environments/dev-github/main.tf` and outputs
+  - [x] 5.1 Create `environments/dev-github/main.tf`
     - Reference existing modules: `modules/networking`, `modules/storage`, `modules/cloudwatch`
     - Reference new `modules/alb` and `modules/compute-asg` instead of `modules/compute`
     - Wire `module.alb.alb_security_group_id` to `compute-asg` module's `alb_security_group_id` input
     - Wire `[module.alb.target_group_arn]` to `compute-asg` module's `target_group_arns` input
     - Pass SSH public key variable to `compute-asg` module
     - _Requirements: 8.1, 8.2, 14.1, 18.1, 18.4, 19.1_
-  - [ ] 5.2 Create `environments/dev-github/outputs.tf`
+  - [x] 5.2 Create `environments/dev-github/outputs.tf`
     - Output ASG name, instance IPs, VPC ID, bucket name, ALB DNS name
     - _Requirements: 6.3, 14.4, 14.5_
-  - [ ] 5.3 Create `environments/dev-github/ansible.tf`
+  - [x] 5.3 Create `environments/dev-github/ansible.tf`
     - Use `local_file` resource to generate `ansible/inventory/terraform_hosts.ini` from compute-asg outputs
     - Format: `[dev_instances]` section with `instance_X ansible_host=<IP>` entries, plus `[dev_instances:vars]` with `ansible_user=ec2-user`
     - _Requirements: 8.6, 9.2_
-  - [ ]* 5.4 Write property test for inventory generation correctness
+  - [x] 5.4 Write property test for inventory generation correctness
     - **Property 5: Inventory generation correctness**
     - **Validates: Requirements 8.6**
 
-- [ ] 6. Checkpoint - Validate Terraform configuration
+- [x] 6. Checkpoint - Validate Terraform configuration
   - Ensure all Terraform files are syntactically valid (`terraform validate` in `environments/dev-github/`)
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Create GitHub Actions plan workflow
-  - [ ] 7.1 Create `.github/workflows/terraform-plan.yml`
+- [x] 7. Create GitHub Actions plan workflow
+  - [x] 7.1 Create `.github/workflows/terraform-plan.yml`
     - Trigger on `pull_request` (main) and `push` (main) with path filters for `environments/**`, `modules/**`, `ansible/**`
     - Set job permissions: `id-token: write`, `contents: read`, `pull-requests: write`
     - Add OIDC auth step using `aws-actions/configure-aws-credentials@v4` with `role-to-assume: ${{ vars.AWS_ROLE_ARN }}`
@@ -138,8 +138,8 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - Ensure zero references to `secrets.*` context — use only `vars.*` or hardcoded non-sensitive values
     - _Requirements: 1.1, 1.2, 1.5, 3.3, 3.4, 5.1, 5.2, 5.3, 5.4, 12.1, 12.4, 13.1, 13.2, 13.3, 13.4, 13.5_
 
-- [ ] 8. Create GitHub Actions apply workflow
-  - [ ] 8.1 Create `.github/workflows/terraform-apply.yml`
+- [-] 8. Create GitHub Actions apply workflow
+  - [x] 8.1 Create `.github/workflows/terraform-apply.yml`
     - Trigger on `push` (main) with path filters for `environments/**`, `modules/**`, `ansible/**`
     - Set job permissions: `id-token: write`, `contents: read`
     - Add OIDC auth step using `aws-actions/configure-aws-credentials@v4`
