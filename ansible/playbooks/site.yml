@@ -50,6 +50,33 @@
         state: started
         enabled: true
 
+    - name: Download WordPress
+      ansible.builtin.get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: /tmp/wordpress.tar.gz
+        mode: '0644'
+
+    - name: Extract WordPress to /var/www/html
+      ansible.builtin.unarchive:
+        src: /tmp/wordpress.tar.gz
+        dest: /var/www/html
+        remote_src: true
+        extra_opts: ['--strip-components=1']
+        owner: apache
+        group: apache
+
+    - name: Set ownership on WordPress files
+      ansible.builtin.file:
+        path: /var/www/html
+        owner: apache
+        group: apache
+        recurse: true
+
+    - name: Restart httpd after WordPress install
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+
     - name: Create motd with host info
       ansible.builtin.copy:
         content: |
