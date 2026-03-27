@@ -138,7 +138,7 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - Ensure zero references to `secrets.*` context — use only `vars.*` or hardcoded non-sensitive values
     - _Requirements: 1.1, 1.2, 1.5, 3.3, 3.4, 5.1, 5.2, 5.3, 5.4, 12.1, 12.4, 13.1, 13.2, 13.3, 13.4, 13.5_
 
-- [-] 8. Create GitHub Actions apply workflow
+- [x] 8. Create GitHub Actions apply workflow
   - [x] 8.1 Create `.github/workflows/terraform-apply.yml`
     - Trigger on `push` (main) with path filters for `environments/**`, `modules/**`, `ansible/**`
     - Set job permissions: `id-token: write`, `contents: read`
@@ -155,18 +155,18 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - If `terraform apply` fails, preserve plan artifact for debugging
     - Ensure zero references to `secrets.*` context
     - _Requirements: 1.1, 1.2, 1.5, 3.1, 3.2, 3.3, 6.1, 6.2, 6.3, 6.4, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 11.1, 11.2, 11.3, 11.4, 12.2, 12.4, 13.1, 13.5_
-  - [ ]* 8.2 Write property test for zero secrets in workflow files
+  - [x] 8.2 Write property test for zero secrets in workflow files
     - **Property 1: Zero secrets in GitHub workflow files**
     - **Validates: Requirements 1.5, 3.4, 13.1, 13.5**
-  - [ ]* 8.3 Write property test for SSH key cleanup on all exit paths
+  - [x] 8.3 Write property test for SSH key cleanup on all exit paths
     - **Property 7: SSH key cleanup on all exit paths**
     - **Validates: Requirements 11.4**
-  - [ ]* 8.4 Write property test for path filters on all workflow triggers
+  - [x] 8.4 Write property test for path filters on all workflow triggers
     - **Property 8: Path filters on all workflow triggers**
     - **Validates: Requirements 12.4**
 
-- [ ] 9. Create GitHub Actions destroy workflow
-  - [ ] 9.1 Create `.github/workflows/terraform-destroy.yml`
+- [x] 9. Create GitHub Actions destroy workflow
+  - [x] 9.1 Create `.github/workflows/terraform-destroy.yml`
     - Trigger on `workflow_dispatch` only (no path filters needed)
     - Set job permissions: `id-token: write`, `contents: read`
     - Add OIDC auth step using `aws-actions/configure-aws-credentials@v4`
@@ -177,25 +177,25 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - Ensure zero references to `secrets.*` context
     - _Requirements: 1.1, 1.5, 7.1, 7.2, 7.3, 7.4, 12.3, 13.1, 13.5_
 
-- [ ] 10. Checkpoint - Validate all workflow files and Ansible integration
+- [x] 10. Checkpoint - Validate all workflow files and Ansible integration
   - Ensure all YAML workflow files are syntactically valid
   - Ensure all Terraform files pass `terraform validate`
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Set up test infrastructure and write unit tests
-  - [ ] 11.1 Initialize test project with TypeScript and fast-check
+- [x] 11. Set up test infrastructure and write unit tests
+  - [x] 11.1 Initialize test project with TypeScript and fast-check
     - Create `tests/package.json` with dependencies: `vitest`, `fast-check`, `js-yaml`, `hcl2-json` (or equivalent HCL parser)
     - Create `tests/tsconfig.json`
     - Create `tests/vitest.config.ts`
     - _Requirements: All (testing infrastructure)_
-  - [ ] 11.2 Create `tests/unit/workflow-structure.test.ts`
+  - [x] 11.2 Create `tests/unit/workflow-structure.test.ts`
     - Parse each workflow YAML file and validate: correct triggers, correct step ordering, `id-token: write` permission, environment references for approval gates, artifact upload in plan workflow, PR comment step in plan workflow
     - _Requirements: 1.1, 1.2, 5.1, 5.2, 5.3, 6.2, 7.2, 12.1, 12.2, 12.3_
-  - [ ] 11.3 Create `tests/unit/iam-policy.test.ts`
+  - [x] 11.3 Create `tests/unit/iam-policy.test.ts`
     - Parse `github-oidc-trust-policy.json` and validate: OIDC provider URL, sub claim condition, aud claim condition
     - Parse `github-terraform-permissions.json` and validate: all required service actions present (including `elasticloadbalancing:*`)
     - _Requirements: 1.4, 2.1, 2.2, 2.3_
-  - [ ] 11.4 Create `tests/unit/terraform-config.test.ts`
+  - [x] 11.4 Create `tests/unit/terraform-config.test.ts`
     - Validate `environments/dev-github/versions.tf` has `backend "s3" {}`
     - Validate `github.s3.tfbackend` has distinct key from GitLab state
     - Validate `modules/compute-asg/main.tf` has launch template, ASG, key pair, security group resources
@@ -203,14 +203,14 @@ Incrementally build a GitHub Actions CI/CD pipeline that authenticates to AWS vi
     - Validate `modules/alb/main.tf` has ALB, target group, listener, and ALB security group resources
     - Validate `environments/dev-github/main.tf` wires ALB module and passes ALB SG ID and TG ARN to compute-asg
     - _Requirements: 4.1, 4.2, 4.3, 8.1, 8.2, 14.1, 14.2, 18.1, 18.4, 19.1_
-  - [ ] 11.5 Create `tests/unit/ansible-config.test.ts`
+  - [x] 11.5 Create `tests/unit/ansible-config.test.ts`
     - Parse `ansible/playbooks/site.yml` and validate: all required packages (httpd, php, php-mysqlnd, php-fpm, php-json, php-xml, python3, pip, mariadb), httpd and php-fpm services enabled and started
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
   - [ ]* 11.6 Write property test for required packages in Ansible playbook
     - **Property 6: Required packages in Ansible playbook**
     - **Validates: Requirements 10.1, 10.2, 10.4, 10.5**
 
-- [ ] 12. Final checkpoint - Ensure all tests pass
+- [x] 12. Final checkpoint - Ensure all tests pass
   - Run full test suite: `cd tests && npm test`
   - Ensure all unit tests and property-based tests pass
   - Ensure all tests pass, ask the user if questions arise.

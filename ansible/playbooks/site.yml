@@ -27,6 +27,30 @@
         state: present
       when: ansible_facts['os_family'] == "RedHat"
 
+    - name: Install web application stack packages
+      ansible.builtin.yum:
+        name:
+          - httpd
+          - php
+          - php-mysqlnd
+          - php-fpm
+          - php-json
+          - php-xml
+          - mariadb
+        state: present
+
+    - name: Enable and start httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Enable and start php-fpm service
+      ansible.builtin.service:
+        name: php-fpm
+        state: started
+        enabled: true
+
     - name: Create motd with host info
       ansible.builtin.copy:
         content: |
