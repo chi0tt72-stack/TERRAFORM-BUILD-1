@@ -154,13 +154,52 @@ jobs:
             environments/dev-github/plan.tfplan
           retention-days: 7
 
+      - name: Wait for ASG instances to be ready
+        run: |
+          ASG_NAME=$(terraform output -raw asg_name)
+          echo "Waiting for ASG instances to reach InService state..."
+          for i in $(seq 1 30); do
+            INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names "$ASG_NAME" \
+              --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+              --output text)
+            COUNT=$(echo "$INSTANCE_IDS" | wc -w | tr -d ' ')
+            echo "Attempt $i: $COUNT instances InService"
+            if [ "$COUNT" -ge 2 ]; then
+              break
+            fi
+            sleep 10
+          done
+
+      - name: Generate Ansible inventory from ASG
+        run: |
+          ASG_NAME=$(terraform output -raw asg_name)
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "$ASG_NAME" \
+            --query "AutoScalingGroups[0].Instances[*].InstanceId" \
+            --output text)
+          echo "[dev_instances]" > ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+          INDEX=1
+          for ID in $INSTANCE_IDS; do
+            IP=$(aws ec2 describe-instances --instance-ids "$ID" \
+              --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+            echo "instance_${INDEX} ansible_host=${IP}" >> ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+            INDEX=$((INDEX + 1))
+          done
+          echo "" >> ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+          echo "[dev_instances:vars]" >> ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+          echo "ansible_user=ec2-user" >> ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+          echo "Generated inventory:"
+          cat ${{ github.workspace }}/ansible/inventory/terraform_hosts.ini
+
       - name: Run Ansible Playbook
         run: |
           sudo apt-get update && sudo apt-get install -y ansible
           cd ${{ github.workspace }}
           ansible-playbook ansible/playbooks/site.yml \
             -i ansible/inventory/terraform_hosts.ini \
-            -e ansible_ssh_private_key_file=/tmp/ssh_key
+            -e ansible_ssh_private_key_file=/tmp/ssh_key \
+            -e ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
       - name: Cleanup SSH key
         if: always()
