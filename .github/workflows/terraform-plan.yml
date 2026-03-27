@@ -60,6 +60,7 @@ jobs:
       - name: Terraform Plan
         run: |
           terraform plan \
+            -var-file=terraform.tfvars \
             -var="ssh_public_key=$SSH_PUBLIC_KEY" \
             -out=plan.tfplan \
             -no-color | tee plan.txt
