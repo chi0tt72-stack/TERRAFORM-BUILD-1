@@ -194,14 +194,13 @@ jobs:
 
       - name: Run Ansible Playbook
         run: |
-          sudo apt-get update && sudo apt-get install -y ansible
           cd ${{ github.workspace }}
           export ANSIBLE_HOST_KEY_CHECKING=False
           export ANSIBLE_TIMEOUT=30
+          export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=no -o ConnectTimeout=30'
           ansible-playbook ansible/playbooks/site.yml \
             -i ansible/inventory/terraform_hosts.ini \
-            -e ansible_ssh_private_key_file=/tmp/ssh_key \
-            -e ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ConnectTimeout=30' \
+            --private-key /tmp/ssh_key \
             -vvv
 
       - name: Cleanup SSH key
