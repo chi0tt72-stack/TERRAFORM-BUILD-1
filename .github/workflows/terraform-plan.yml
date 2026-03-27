@@ -7,12 +7,14 @@ on:
       - 'environments/**'
       - 'modules/**'
       - 'ansible/**'
+      - '.github/workflows/**'
   push:
     branches: [main]
     paths:
       - 'environments/**'
       - 'modules/**'
       - 'ansible/**'
+      - '.github/workflows/**'
 
 permissions:
   id-token: write
