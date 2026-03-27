@@ -34,9 +34,8 @@
           - php
           - php-mysqlnd
           - php-fpm
-          - php-json
           - php-xml
-          - mariadb
+          - mariadb105
         state: present
 
     - name: Enable and start httpd service
