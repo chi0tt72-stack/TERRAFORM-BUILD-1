@@ -26,6 +26,13 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
+      - name: Retrieve SSH public key from Secrets Manager
+        run: |
+          SSH_PUBLIC_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id ${{ vars.SSH_PUBLIC_KEY_SECRET || 'terraform/ssh-public-key' }} \
+            --query SecretString --output text)
+          echo "SSH_PUBLIC_KEY=$SSH_PUBLIC_KEY" >> $GITHUB_ENV
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -33,7 +40,10 @@ jobs:
         run: terraform init -backend-config=github.s3.tfbackend
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: |
+          terraform destroy -auto-approve \
+            -var-file=terraform.tfvars \
+            -var="ssh_public_key=$SSH_PUBLIC_KEY"
 
       - name: Confirm destruction
         run: echo "Successfully destroyed environment dev-github"
