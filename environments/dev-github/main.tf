@@ -63,3 +63,31 @@ module "cloudwatch" {
   cpu_alarm_threshold      = var.cpu_alarm_threshold
   enable_sns_notifications = var.enable_sns_notifications
 }
+
+module "awx" {
+  count  = var.enable_awx ? 1 : 0
+  source = "../../modules/awx"
+
+  environment                  = var.environment
+  vpc_id                       = module.networking.vpc_id
+  subnet_id                    = module.networking.public_subnet_ids[0]
+  vpc_cidr                     = var.vpc_cidr
+  instance_type                = var.awx_instance_type
+  ec2_security_group_id        = module.compute_asg.security_group_id
+  awx_admin_password_secret_id = var.awx_admin_password_secret_id
+  ssh_private_key_secret_id    = var.ssh_private_key_secret_id
+  awx_project_git_url          = var.awx_project_git_url
+  key_pair_name                = "${var.environment}-key"
+  tags                         = var.tags
+}
+
+resource "aws_security_group_rule" "asg_ssh_from_awx" {
+  count                    = var.enable_awx ? 1 : 0
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  security_group_id        = module.compute_asg.security_group_id
+  source_security_group_id = module.awx[0].awx_security_group_id
+  description              = "SSH from AWX server"
+}

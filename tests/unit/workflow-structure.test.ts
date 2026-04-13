@@ -111,7 +111,7 @@ describe('terraform-apply.yml', () => {
     expect(applyWorkflow.jobs.apply.environment).toBe('production');
   });
 
-  it('has correct step ordering: init → plan → apply → outputs → ansible', () => {
+  it('has correct step ordering: init → plan → apply → outputs → AWX', () => {
     const steps: any[] = applyWorkflow.jobs.apply.steps;
     const names = steps.map((s: any) => s.name);
 
@@ -119,13 +119,19 @@ describe('terraform-apply.yml', () => {
     const planIdx = names.findIndex((n: string) => /terraform plan/i.test(n));
     const applyIdx = names.findIndex((n: string) => /terraform apply/i.test(n));
     const outputsIdx = names.findIndex((n: string) => /export.*output/i.test(n) || /terraform output/i.test(n));
-    const ansibleIdx = names.findIndex((n: string) => /ansible/i.test(n));
+    const awxHealthIdx = names.findIndex((n: string) => /wait for awx health/i.test(n));
+    const awxInventoryIdx = names.findIndex((n: string) => /update awx inventory/i.test(n));
+    const awxJobIdx = names.findIndex((n: string) => /launch awx job/i.test(n));
+    const awxPollIdx = names.findIndex((n: string) => /poll awx job/i.test(n));
 
     expect(initIdx).toBeGreaterThanOrEqual(0);
     expect(planIdx).toBeGreaterThan(initIdx);
     expect(applyIdx).toBeGreaterThan(planIdx);
     expect(outputsIdx).toBeGreaterThan(applyIdx);
-    expect(ansibleIdx).toBeGreaterThan(outputsIdx);
+    expect(awxHealthIdx).toBeGreaterThan(outputsIdx);
+    expect(awxInventoryIdx).toBeGreaterThan(awxHealthIdx);
+    expect(awxJobIdx).toBeGreaterThan(awxInventoryIdx);
+    expect(awxPollIdx).toBeGreaterThan(awxJobIdx);
   });
 
   // Validates: Requirement 1.2 — OIDC auth before terraform in apply job

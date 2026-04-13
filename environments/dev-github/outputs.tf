@@ -22,3 +22,8 @@ output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer"
   value       = module.alb.alb_dns_name
 }
+
+output "awx_private_ip" {
+  description = "Private IP of the AWX server"
+  value       = var.enable_awx ? module.awx[0].awx_private_ip : ""
+}

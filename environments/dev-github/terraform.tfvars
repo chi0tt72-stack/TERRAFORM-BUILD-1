@@ -16,3 +16,5 @@ tags = {
   Environment = "dev-github"
   ManagedBy   = "terraform"
 }
+enable_awx          = true
+awx_project_git_url = "https://github.com/YOUR_USERNAME/YOUR_REPO.git"

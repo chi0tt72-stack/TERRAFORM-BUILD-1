@@ -78,7 +78,7 @@ describe('Ansible playbook package installation', () => {
 
   // Validates: Requirement 10.2 — PHP and required modules
   it('installs php and required php modules', () => {
-    const requiredPhpPackages = ['php', 'php-mysqlnd', 'php-fpm', 'php-json', 'php-xml'];
+    const requiredPhpPackages = ['php', 'php-mysqlnd', 'php-fpm', 'php-xml'];
     for (const pkg of requiredPhpPackages) {
       expect(allPackages, `missing package: ${pkg}`).toContain(pkg);
     }

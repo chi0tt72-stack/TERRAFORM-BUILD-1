@@ -85,3 +85,33 @@ variable "ssh_public_key" {
   type        = string
   sensitive   = true
 }
+
+variable "enable_awx" {
+  description = "Enable AWX server provisioning"
+  type        = bool
+  default     = false
+}
+
+variable "awx_instance_type" {
+  description = "EC2 instance type for AWX server"
+  type        = string
+  default     = "t3.medium"
+}
+
+variable "awx_admin_password_secret_id" {
+  description = "Secrets Manager secret ID for AWX admin password"
+  type        = string
+  default     = "awx/admin-password"
+}
+
+variable "ssh_private_key_secret_id" {
+  description = "Secrets Manager secret ID for SSH private key used by AWX"
+  type        = string
+  default     = "terraform/ssh-private-key"
+}
+
+variable "awx_project_git_url" {
+  description = "Git repository URL for AWX project containing Ansible playbooks"
+  type        = string
+  default     = ""
+}
