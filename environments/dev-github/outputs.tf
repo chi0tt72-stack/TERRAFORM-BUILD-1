@@ -27,3 +27,8 @@ output "awx_private_ip" {
   description = "Private IP of the AWX server"
   value       = var.enable_awx ? module.awx[0].awx_private_ip : ""
 }
+
+output "awx_public_ip" {
+  description = "Public IP of the AWX server"
+  value       = var.enable_awx ? module.awx[0].awx_public_ip : ""
+}

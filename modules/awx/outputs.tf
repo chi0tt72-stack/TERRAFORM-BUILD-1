@@ -3,6 +3,11 @@ output "awx_private_ip" {
   value       = aws_instance.awx.private_ip
 }
 
+output "awx_public_ip" {
+  description = "Public IP of the AWX EC2 instance"
+  value       = aws_instance.awx.public_ip
+}
+
 output "awx_instance_id" {
   description = "Instance ID of the AWX EC2 instance"
   value       = aws_instance.awx.id

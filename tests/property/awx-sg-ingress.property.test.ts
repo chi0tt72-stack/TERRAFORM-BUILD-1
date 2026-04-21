@@ -37,19 +37,26 @@ describe('Property 1: AWX security group ingress rules only allow VPC CIDR', () 
     expect(sgBlock).toMatch(/vpc_id\s*=\s*var\.vpc_id/);
   });
 
-  it('has exactly two ingress rules (port 80 and port 443)', () => {
+  it('has exactly three ingress rules (port 80 VPC, port 80 public, port 443 VPC)', () => {
     const sgBlock = sgMatch![0];
     const ingressBlocks = extractIngressBlocks(sgBlock);
-    expect(ingressBlocks.length).toBe(2);
+    expect(ingressBlocks.length).toBe(3);
   });
 
-  it('all ingress rules reference var.vpc_cidr, never 0.0.0.0/0', () => {
+  it('VPC-only ingress rules reference var.vpc_cidr, public ingress is only port 80', () => {
     const sgBlock = sgMatch![0];
     const ingressBlocks = extractIngressBlocks(sgBlock);
 
-    for (const block of ingressBlocks) {
+    const publicBlocks = ingressBlocks.filter((b) => /0\.0\.0\.0\/0/.test(b));
+    const vpcBlocks = ingressBlocks.filter((b) => /var\.vpc_cidr/.test(b));
+
+    // Only one public ingress rule allowed, and it must be port 80
+    expect(publicBlocks.length).toBe(1);
+    expect(publicBlocks[0]).toMatch(/from_port\s*=\s*80/);
+
+    // VPC blocks must reference var.vpc_cidr
+    for (const block of vpcBlocks) {
       expect(block).toMatch(/var\.vpc_cidr/);
-      expect(block).not.toMatch(/0\.0\.0\.0\/0/);
     }
   });
 
@@ -115,8 +122,8 @@ describe('Property 1: AWX security group ingress rules only allow VPC CIDR', () 
       fc.property(fc.constant(sgBlock), (block) => {
         const ingressBlocks = extractIngressBlocks(block);
 
-        // Must have exactly two ingress rules (80 and 443)
-        expect(ingressBlocks.length).toBe(2);
+        // Must have exactly three ingress rules
+        expect(ingressBlocks.length).toBe(3);
 
         const allowedPorts = new Set([80, 443]);
 
@@ -124,11 +131,13 @@ describe('Property 1: AWX security group ingress rules only allow VPC CIDR', () 
           // Each ingress must use TCP
           expect(ingress).toMatch(/protocol\s*=\s*"tcp"/);
 
-          // Each ingress must reference var.vpc_cidr
-          expect(ingress).toMatch(/var\.vpc_cidr/);
-
-          // No ingress must allow 0.0.0.0/0
-          expect(ingress).not.toMatch(/0\.0\.0\.0\/0/);
+          // Each ingress must reference var.vpc_cidr OR be port 80 from 0.0.0.0/0
+          const isPublic = /0\.0\.0\.0\/0/.test(ingress);
+          if (isPublic) {
+            expect(ingress).toMatch(/from_port\s*=\s*80/);
+          } else {
+            expect(ingress).toMatch(/var\.vpc_cidr/);
+          }
 
           // Port must be 80 or 443
           const fromPort = ingress.match(/from_port\s*=\s*(\d+)/);

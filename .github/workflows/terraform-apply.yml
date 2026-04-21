@@ -95,6 +95,7 @@ jobs:
       vpc_id: ${{ steps.outputs.outputs.vpc_id }}
       s3_bucket_name: ${{ steps.outputs.outputs.s3_bucket_name }}
       awx_private_ip: ${{ steps.outputs.outputs.awx_private_ip }}
+      awx_public_ip: ${{ steps.outputs.outputs.awx_public_ip }}
 
     steps:
       - name: Checkout repository
@@ -143,6 +144,10 @@ jobs:
           if [ -n "$AWX_IP" ]; then
             echo "awx_private_ip=$AWX_IP" >> $GITHUB_OUTPUT
           fi
+          AWX_PUBLIC_IP=$(terraform output -raw awx_public_ip 2>/dev/null || echo "")
+          if [ -n "$AWX_PUBLIC_IP" ]; then
+            echo "awx_public_ip=$AWX_PUBLIC_IP" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload Plan Artifact on Failure
         uses: actions/upload-artifact@v4
@@ -171,7 +176,7 @@ jobs:
           done
 
       - name: Retrieve AWX Admin Password
-        if: steps.outputs.outputs.awx_private_ip != ''
+        if: steps.outputs.outputs.awx_public_ip != ''
         run: |
           set -euo pipefail
           SECRET_ID="${{ vars.AWX_ADMIN_PASSWORD_SECRET || 'awx/admin-password' }}"
@@ -187,10 +192,10 @@ jobs:
           echo "AWX admin password retrieved successfully."
 
       - name: Wait for AWX Health
-        if: steps.outputs.outputs.awx_private_ip != ''
+        if: steps.outputs.outputs.awx_public_ip != ''
         run: |
           set -euo pipefail
-          AWX_IP="${{ steps.outputs.outputs.awx_private_ip }}"
+          AWX_IP="${{ steps.outputs.outputs.awx_public_ip }}"
           TIMEOUT=300
           INTERVAL=10
           ELAPSED=0
@@ -209,10 +214,10 @@ jobs:
           exit 1
 
       - name: Update AWX Inventory
-        if: steps.outputs.outputs.awx_private_ip != ''
+        if: steps.outputs.outputs.awx_public_ip != ''
         run: |
           set -euo pipefail
-          AWX_IP="${{ steps.outputs.outputs.awx_private_ip }}"
+          AWX_IP="${{ steps.outputs.outputs.awx_public_ip }}"
           AWX_URL="http://${AWX_IP}"
           INSTANCE_IPS='${{ steps.outputs.outputs.instance_ips }}'
 
@@ -286,10 +291,10 @@ jobs:
 
       - name: Launch AWX Job
         id: awx_job
-        if: steps.outputs.outputs.awx_private_ip != ''
+        if: steps.outputs.outputs.awx_public_ip != ''
         run: |
           set -euo pipefail
-          AWX_IP="${{ steps.outputs.outputs.awx_private_ip }}"
+          AWX_IP="${{ steps.outputs.outputs.awx_public_ip }}"
           AWX_URL="http://${AWX_IP}"
           INSTANCE_IPS='${{ steps.outputs.outputs.instance_ips }}'
 
@@ -315,10 +320,10 @@ jobs:
           echo "job_id=$JOB_ID" >> $GITHUB_OUTPUT
 
       - name: Poll AWX Job Status
-        if: steps.outputs.outputs.awx_private_ip != ''
+        if: steps.outputs.outputs.awx_public_ip != ''
         run: |
           set -euo pipefail
-          AWX_IP="${{ steps.outputs.outputs.awx_private_ip }}"
+          AWX_IP="${{ steps.outputs.outputs.awx_public_ip }}"
           AWX_URL="http://${AWX_IP}"
           JOB_ID="${{ steps.awx_job.outputs.job_id }}"
           TIMEOUT=600
