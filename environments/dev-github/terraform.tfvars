@@ -17,4 +17,4 @@ tags = {
   ManagedBy   = "terraform"
 }
 enable_awx          = true
-awx_project_git_url = "https://github.com/YOUR_USERNAME/YOUR_REPO.git"
+awx_project_git_url = "https://github.com/chi0tt72-stack/TERRAFORM-BUILD-1.git"
