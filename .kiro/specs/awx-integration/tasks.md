@@ -58,7 +58,7 @@ Replace direct Ansible execution in the GitHub Actions pipeline with an AWX serv
     - Sync the project to pull playbooks from Git
     - _Requirements: 1.3, 1.4, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3, 7.1, 7.5, 8.1, 8.2, 8.3, 8.4, 8.5_
 
-  - [ ]* 2.2 Write unit tests for AWX bootstrap script content
+  - [x]* 2.2 Write unit tests for AWX bootstrap script content
     - Create `tests/unit/awx-bootstrap.test.ts`
     - Verify user_data template contains Docker Compose setup
     - Verify bootstrap configures: project, credential (ec2-user), inventory (dev_instances), job template (site-yml, become enabled)
@@ -100,7 +100,7 @@ Replace direct Ansible execution in the GitHub Actions pipeline with an AWX serv
     - Add `enable_awx = true` and `awx_project_git_url` with the repository URL
     - _Requirements: 13.1_
 
-  - [ ]* 4.6 Write unit tests for AWX environment configuration
+  - [x]* 4.6 Write unit tests for AWX environment configuration
     - Create or update `tests/unit/awx-module-structure.test.ts`
     - Verify `modules/awx/` contains `main.tf`, `variables.tf`, `outputs.tf`, `templates/user_data.sh.tpl`
     - Verify `environments/dev-github/main.tf` includes AWX module with conditional count
@@ -160,20 +160,20 @@ Replace direct Ansible execution in the GitHub Actions pipeline with an AWX serv
     - Add `awx_private_ip` to the "Export Terraform Outputs" step (conditional on AWX being enabled)
     - _Requirements: 14.3_
 
-  - [ ]* 6.8 Write property test: pipeline does not handle SSH private keys for Ansible
+  - [x]* 6.8 Write property test: pipeline does not handle SSH private keys for Ansible
     - **Property 2: Pipeline does not handle SSH private keys for Ansible execution**
     - Create `tests/property/awx-no-ssh-keys.property.test.ts`
     - Verify the apply job does not contain `ssh-private-key` retrieval for Ansible execution
     - **Validates: Requirements 6.5, 12.3**
 
-  - [ ]* 6.9 Write property test: zero AWX secrets in GitHub workflow files
+  - [x]* 6.9 Write property test: zero AWX secrets in GitHub workflow files
     - **Property 5: Zero AWX secrets in GitHub workflow files**
     - Create `tests/property/awx-zero-secrets.property.test.ts`
     - Verify no `secrets.*` references for AWX-related config in workflow files
     - All AWX values sourced from `vars.*`, Terraform outputs, or hardcoded non-sensitive identifiers
     - **Validates: Requirements 14.1, 14.2, 14.4**
 
-  - [ ]* 6.10 Write unit tests for AWX workflow changes
+  - [x]* 6.10 Write unit tests for AWX workflow changes
     - Create or update `tests/unit/awx-workflow.test.ts`
     - Verify "Generate Ansible inventory from ASG" step is removed
     - Verify "Run Ansible Playbook" step is removed
@@ -186,15 +186,15 @@ Replace direct Ansible execution in the GitHub Actions pipeline with an AWX serv
   - Ensure `terraform-apply.yml` is syntactically valid YAML
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Write property tests for AWX job polling and health check logic
-  - [ ]* 8.1 Write property test for AWX job polling state machine
+- [x] 8. Write property tests for AWX job polling and health check logic
+  - [x]* 8.1 Write property test for AWX job polling state machine
     - **Property 3: AWX job polling state machine correctness**
     - Create `tests/property/awx-job-polling.property.test.ts`
     - Generate arbitrary sequences of AWX job status responses ("pending", "running", "successful", "failed", "error")
     - Verify: continues polling on "pending"/"running", returns success on "successful", returns failure on "failed"/"error", returns timeout after 600 seconds
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
-  - [ ]* 8.2 Write property test for AWX health check retry logic
+  - [x]* 8.2 Write property test for AWX health check retry logic
     - **Property 4: AWX health check retry logic correctness**
     - Create `tests/property/awx-health-check.property.test.ts`
     - Generate arbitrary sequences of health check responses (success/failure)
