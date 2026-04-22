@@ -16,19 +16,11 @@ resource "aws_security_group" "awx" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "AWX Web UI / API from VPC"
+    description = "AWX Web UI / API"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
-  }
-
-  ingress {
-    description = "AWX API from GitHub Actions runner"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {

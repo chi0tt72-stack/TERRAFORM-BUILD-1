@@ -148,6 +148,10 @@ jobs:
           if [ -n "$AWX_PUBLIC_IP" ]; then
             echo "awx_public_ip=$AWX_PUBLIC_IP" >> $GITHUB_OUTPUT
           fi
+          AWX_SG_ID=$(terraform output -raw awx_security_group_id 2>/dev/null || echo "")
+          if [ -n "$AWX_SG_ID" ]; then
+            echo "awx_sg_id=$AWX_SG_ID" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload Plan Artifact on Failure
         uses: actions/upload-artifact@v4
@@ -190,6 +194,23 @@ jobs:
           echo "::add-mask::$AWX_ADMIN_PASSWORD"
           echo "AWX_ADMIN_PASSWORD=$AWX_ADMIN_PASSWORD" >> $GITHUB_ENV
           echo "AWX admin password retrieved successfully."
+
+      - name: Open AWX SG for GitHub runner
+        if: steps.outputs.outputs.awx_public_ip != ''
+        run: |
+          set -euo pipefail
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "GitHub runner public IP: ${RUNNER_IP}"
+          echo "RUNNER_IP=${RUNNER_IP}" >> $GITHUB_ENV
+          AWX_SG_ID="${{ steps.outputs.outputs.awx_sg_id }}"
+          echo "Adding ingress rule to SG ${AWX_SG_ID} for ${RUNNER_IP}/32 on port 80..."
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$AWX_SG_ID" \
+            --protocol tcp \
+            --port 80 \
+            --cidr "${RUNNER_IP}/32" \
+            --tag-specifications "ResourceType=security-group-rule,Tags=[{Key=Name,Value=github-runner-temp}]"
+          echo "SG rule added."
 
       - name: Wait for AWX Health
         if: steps.outputs.outputs.awx_public_ip != ''
@@ -367,6 +388,20 @@ jobs:
           done
           echo "::error::AWX job $JOB_ID did not complete within ${TIMEOUT} seconds"
           exit 1
+
+      - name: Close AWX SG for GitHub runner
+        if: always() && steps.outputs.outputs.awx_public_ip != ''
+        run: |
+          AWX_SG_ID="${{ steps.outputs.outputs.awx_sg_id }}"
+          if [ -n "$RUNNER_IP" ] && [ -n "$AWX_SG_ID" ]; then
+            echo "Removing ingress rule from SG ${AWX_SG_ID} for ${RUNNER_IP}/32 on port 80..."
+            aws ec2 revoke-security-group-ingress \
+              --group-id "$AWX_SG_ID" \
+              --protocol tcp \
+              --port 80 \
+              --cidr "${RUNNER_IP}/32" 2>/dev/null || echo "Rule already removed or not found."
+            echo "SG rule removed."
+          fi
 
       - name: Cleanup SSH key
         if: always()

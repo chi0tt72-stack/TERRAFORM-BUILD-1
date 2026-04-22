@@ -32,3 +32,8 @@ output "awx_public_ip" {
   description = "Public IP of the AWX server"
   value       = var.enable_awx ? module.awx[0].awx_public_ip : ""
 }
+
+output "awx_security_group_id" {
+  description = "Security group ID of the AWX server"
+  value       = var.enable_awx ? module.awx[0].awx_security_group_id : ""
+}
