@@ -62,8 +62,6 @@ echo "kubectl version: $$(kubectl version --short 2>/dev/null || kubectl version
 AWX_OPERATOR_VERSION="2.19.0"
 echo ">>> Deploying AWX Operator v$${AWX_OPERATOR_VERSION}..."
 
-kubectl apply -f "https://raw.githubusercontent.com/ansible/awx-operator/$${AWX_OPERATOR_VERSION}/config/default/kustomization.yaml" 2>/dev/null || true
-
 # Create the awx namespace and deploy the operator via kustomize
 cat > /tmp/kustomization.yaml <<'KUSTOM_EOF'
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -245,7 +243,6 @@ echo "Machine credential type ID: $$MACHINE_CRED_TYPE_ID"
 # 13. Create Machine Credential with SSH key
 # -------------------------------------------------------
 echo ">>> Creating Machine credential: ${environment}-ssh-credential..."
-# Escape the SSH key for JSON (handle newlines)
 SSH_KEY_JSON=$$(echo "$$SSH_PRIVATE_KEY" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
 
 CREDENTIAL_RESPONSE=$$(awx_api POST "/api/v2/credentials/" "{
@@ -296,7 +293,6 @@ JOB_TEMPLATE_RESPONSE=$$(awx_api POST "/api/v2/job_templates/" "{
 JOB_TEMPLATE_ID=$$(echo "$$JOB_TEMPLATE_RESPONSE" | jq -r '.id')
 echo "Job template created with ID: $$JOB_TEMPLATE_ID"
 
-# Associate credential with job template
 echo ">>> Associating credential with job template..."
 awx_api POST "/api/v2/job_templates/$$JOB_TEMPLATE_ID/credentials/" "{
   \"id\": $$CREDENTIAL_ID
@@ -309,7 +305,6 @@ echo "Credential associated with job template"
 echo ">>> Syncing project to pull playbooks from Git..."
 awx_api POST "/api/v2/projects/$$PROJECT_ID/update/" ""
 
-# Wait for project sync to complete
 echo ">>> Waiting for project sync..."
 SYNC_MAX_WAIT=300
 SYNC_ELAPSED=0

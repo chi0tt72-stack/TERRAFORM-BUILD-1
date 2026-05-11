@@ -217,7 +217,7 @@ jobs:
         run: |
           set -euo pipefail
           AWX_IP="${{ steps.outputs.outputs.awx_public_ip }}"
-          TIMEOUT=300
+          TIMEOUT=900
           INTERVAL=10
           ELAPSED=0
           echo "Waiting for AWX server at http://${AWX_IP}/api/v2/ping/ to become healthy..."
